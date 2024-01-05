@@ -1,4 +1,4 @@
-import { Component } from 'react'
+import { useState, useEffect } from 'react' 
 import SearchBar from './components/Searchbar/Searchbar'
 import ImageGallery from './components/ImageGallery/ImageGallery'
 import { getAllImages } from './services/images'
@@ -10,79 +10,66 @@ import css from './App.module.css'
 import cssImageItem from './components/Modal/Modal.module.css'
 
 
-class App extends Component {
-    state = {
-        images: [],
-        isLoading: false,
-        error: '',
-        page: 1,
-        value: '',
-        largeImage: null,
-        totalPages: 0,
-    }
+const App = () => {
+    const [images, setImages] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [page, setPage] = useState(1);
+    const [value, setValue] = useState('');
+    const [largeImage, setLargeImage] = useState(null);
+    const [totalPages, setTotalPages] = useState(0);
     
-    componentDidUpdate(_, prevState) {
-        if (this.state.value !== prevState.value || this.state.page !== prevState.page) {
-            this.getImages(this.state.page, this.state.value);
-        }
+    useEffect(() => {
+        if (!value) return;
+
+        getImages(page, value);
+    }, [value, page])
+
+    const onSubmit = (value) => {
+        setValue(value);
+        setPage(1);
     }
 
-    onSubmit = (value) => {
-        this.setState({ value: value, page: 1 })
+    const handleLoadMore = () => {
+        setPage((prev) => prev + 1)
     }
 
-    handleLoadMore = () => {
-        this.setState((prev) => ({ page: prev.page + 1 }))
+    const handleOpenModal = (largeImage) => {
+        setLargeImage(largeImage);
     }
 
-    handleOpenModal = (largeImage) => {
-        this.setState({ largeImage: largeImage })
-    }
-
-    toggleModal = () => {
-		this.setState(() => ({
-			largeImage: null,
-		}))
+    const toggleModal = () => {
+        setLargeImage(null);
 	}
 
-    getImages = async (page, value) => { 
+    const getImages = async (page, value) => { 
         try {
-            this.setState({
-                isLoading: true,
-                error: ''
-            })
+            setIsLoading(true);
+            setError('');
             const response = await (getAllImages(page, value))
-            this.setState((prev) => ({
-                images: this.state.page > 1 ? [...prev.images, ...response.hits] : response.hits,
-                totalPages: Math.ceil(response.totalHits / 12),
-            }))
+            setImages((prev) => page > 1 ? [...prev, ...response.hits] : response.hits);
+            setTotalPages(Math.ceil(response.totalHits / 12));
         } catch (error) {
-            this.setState({
-                error: error.response.data
-            })
+            setError(error.response.data);
         } finally { 
-            this.setState({
-                isLoading: false,
-            })
+            setIsLoading(false);
         }
     }
-    
-	render() {
-		const { images, isLoading, error, largeImage, totalPages, page } = this.state;
-		return (
-			<div className={css.wrapper}>
-                <SearchBar onSubmit={this.onSubmit} />
-				
-                {error && <h1>{error}</h1>}
-                {isLoading && <Loader /> }
-                <ImageGallery images={images} handleOpenModal={this.handleOpenModal}/>
 
-                {totalPages > 1 && page !== totalPages && <Button handleLoadMore={this.handleLoadMore} />}
+    return (
+        <div className={css.wrapper}>
+            <SearchBar onSubmit={onSubmit} />
+            
+            {error && <h1>{error}</h1>}
+            {isLoading && <Loader /> }
+            <ImageGallery images={images} handleOpenModal={handleOpenModal}/>
 
-                {largeImage && <Modal hideModal={this.toggleModal}><img className={cssImageItem.modal} src={largeImage.largeImageURL} alt={largeImage.tags} /></Modal>}
-			</div>
-		)
-	}
+            {totalPages > 1 && page !== totalPages && <Button handleLoadMore={handleLoadMore} />}
+
+            {largeImage && <Modal hideModal={toggleModal}><img className={cssImageItem.modal} src={largeImage.largeImageURL} alt={largeImage.tags} /></Modal>}
+        </div>
+    )
+	
 }
 
 
