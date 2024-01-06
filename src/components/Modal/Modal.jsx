@@ -1,7 +1,6 @@
 import { useEffect } from 'react'; 
 import css from './Modal.module.css'
 
-
 const Modal = ({ hideModal, children }) => {
         
     const handleEsc = (e) => {
