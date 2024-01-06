@@ -1,13 +1,13 @@
-import { useEffect } from 'react'; 
+import { useEffect, useCallback } from 'react'; 
 import css from './Modal.module.css'
 
 const Modal = ({ hideModal, children }) => {
-        
-    const handleEsc = (e) => {
+
+    const handleEsc = useCallback((e) => {
         if (e.code === 'Escape') {
             hideModal();
         }
-    }
+    }, [hideModal])
 
     useEffect(() => { 
         document.addEventListener('keydown', handleEsc);
@@ -15,7 +15,7 @@ const Modal = ({ hideModal, children }) => {
         return () => {
             document.removeEventListener('keydown', handleEsc)
         }
-    }, [])
+    }, [handleEsc])
   
     return (
         <div className={css.overlay} onClick={hideModal}>
